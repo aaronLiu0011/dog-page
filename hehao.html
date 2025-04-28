@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>和小狗和好吧</title>
+  <style>
+    body {
+        text-align: center;
+        margin: 0;
+        padding: 0;
+        font-family: "Comic Sans MS", "Chalkboard", cursive, sans-serif;
+        background-color: #ffffff;
+        overflow: hidden;
+        position: relative;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    h1 {
+        margin-top: 20px;
+        font-size: 4vw;
+    }
+    #dogImage {
+        width: 20vw;
+        margin-top: 2vh;
+    }
+    #buttons {
+        margin-top: 5vh;
+        position: relative;
+        width: 80vw;
+        height: 30vh;
+        background-color: transparent;
+    }
+    button {
+        font-size: 5vw;
+        padding: 2vw 6vw;
+        border: none;
+        border-radius: 10px;
+        background-color: #87ceeb;
+        color: white;
+        transition: all 0.3s ease;
+        position: absolute;
+    }
+    #okBtn {
+        background-color: #ff7f50;
+        left: 10%;
+        top: 20%;
+        z-index: 10; /* 保证和好按钮在上面 */
+    }
+    #noBtn {
+        background-color: #87ceeb;
+        left: 60%;
+        top: 20%;
+        z-index: 5;
+    }
+    #message {
+        margin-top: 5vh;
+        font-size: 5vw;
+        color: darkgreen;
+    }
+    </style>
+</head>
+<body>
+
+<h1>要和小狗和好吗？</h1>
+
+<img id="dogImage" src="sad_dog.jpg" alt="小狗">
+
+<div id="buttons">
+    <button id="okBtn">和好</button>
+    <button id="noBtn">不要</button>
+</div>
+
+<div id="message"></div>
+
+<script>
+    const okBtn = document.getElementById('okBtn');
+    const noBtn = document.getElementById('noBtn');
+    const message = document.getElementById('message');
+    const dogImage = document.getElementById('dogImage');
+    const buttonsContainer = document.getElementById('buttons');
+    let noClicked = 0;
+    let moving = false;
+    let moveInterval;
+
+  const sadDog = "sad_dog.jpg";    // 求和时小狗
+  const happyDog = "happy_dog.jpg"; // 和好后小狗
+
+  // 检查两个按钮是否重叠
+    function isOverlap(btn1, btn2) {
+    const rect1 = btn1.getBoundingClientRect();
+    const rect2 = btn2.getBoundingClientRect();
+    return !(rect1.right < rect2.left || 
+            rect1.left > rect2.right || 
+            rect1.bottom < rect2.top || 
+            rect1.top > rect2.bottom);
+    }
+
+  // 点击和好
+    okBtn.addEventListener('click', () => {
+    message.textContent = '汪，小狗就知道';
+    okBtn.style.display = 'none';
+    noBtn.style.display = 'none';
+    dogImage.src = happyDog;
+    clearInterval(moveInterval); // 停止移动
+    });
+
+  // 点击不要
+    noBtn.addEventListener('click', () => {
+    noClicked++;
+    dogImage.src = sadDog;
+
+    const phrases = [
+        "求求和好", 
+        "真的求求你", 
+        "别生气了嘛", 
+        "小狗快哭了",
+        "再考虑一下？"
+    ];
+    noBtn.textContent = phrases[Math.min(noClicked - 1, phrases.length - 1)];
+    
+    let scale = 1 + noClicked * 0.2;
+    okBtn.style.transform = `scale(${scale})`;
+
+    // 第一次点击不要时，开始持续移动
+    if (!moving) {
+        moving = true;
+        moveInterval = setInterval(() => {
+        const maxWidth = buttonsContainer.offsetWidth - noBtn.offsetWidth;
+        const maxHeight = buttonsContainer.offsetHeight - noBtn.offsetHeight;
+        
+        let newLeft, newTop;
+        let tryCount = 0;
+        do {
+            newLeft = Math.random() * maxWidth;
+            newTop = Math.random() * maxHeight;
+            noBtn.style.left = `${newLeft}px`;
+            noBtn.style.top = `${newTop}px`;
+            tryCount++;
+            if (tryCount > 100) break; // 防止极端情况下死循环
+        } while (isOverlap(okBtn, noBtn));
+      }, 500); // 每0.5秒移动一次
+    }
+    });
+
+  // 防止窗口变化后按钮飞出界面
+    window.addEventListener('resize', () => {
+    const maxWidth = buttonsContainer.offsetWidth - noBtn.offsetWidth;
+    const maxHeight = buttonsContainer.offsetHeight - noBtn.offsetHeight;
+    noBtn.style.left = `${Math.min(parseFloat(noBtn.style.left), maxWidth)}px`;
+    noBtn.style.top = `${Math.min(parseFloat(noBtn.style.top), maxHeight)}px`;
+    });
+</script>
+
+</body>
+</html>
