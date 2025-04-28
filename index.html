@@ -6,17 +6,17 @@
   <title>和小狗和好吧</title>
   <style>
     body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
         text-align: center;
         margin: 0;
         padding: 0;
-        font-family: "Comic Sans MS", "Chalkboard", cursive, sans-serif;
+        font-family: "Baloo 2", cursive, sans-serif;
         background-color: #ffffff;
-        overflow: hidden;
-        position: relative;
-        height: 100vh;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+        overflow-x: hidden;
     }
     h1 {
         margin-top: 20px;
@@ -121,7 +121,7 @@
     ];
     noBtn.textContent = phrases[Math.min(noClicked - 1, phrases.length - 1)];
     
-    let scale = 1 + noClicked * 0.2;
+    let scale = 1 + noClicked * 0.5;
     okBtn.style.transform = `scale(${scale})`;
 
     // 第一次点击不要时，开始持续移动
