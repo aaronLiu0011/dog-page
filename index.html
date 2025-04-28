@@ -100,7 +100,7 @@
 
   // 点击和好
     okBtn.addEventListener('click', () => {
-    message.textContent = '汪，小狗就知道💗';
+    message.textContent = '汪～小狗就知道💗';
     okBtn.style.display = 'none';
     noBtn.style.display = 'none';
     dogImage.src = happyDog;
@@ -114,14 +114,14 @@
 
     const phrases = [
         "求求和好", 
-        "真的求求你", 
+        "真的求求你嘛", 
         "别生气了嘛", 
         "小狗快哭了",
         "再考虑一下？"
     ];
     noBtn.textContent = phrases[Math.min(noClicked - 1, phrases.length - 1)];
     
-    let scale = 1 + noClicked * 0.5;
+    let scale = 1 + noClicked * 0.7;
     okBtn.style.transform = `scale(${scale})`;
 
     // 第一次点击不要时，开始持续移动
