@@ -1,273 +1,32 @@
-import { useEffect, useState } from "react";
-import {
-  Alert,
-  Avatar,
-  Box,
-  Button,
-  Chip,
-  CircularProgress,
-  Paper,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
-import EditIcon from "@mui/icons-material/Edit";
-import { getMe, updateMyProfile } from "../api/userApi";
-import type { User } from "../api/userApi";
-import { getTags } from "../api/tagApi";
-import type { Tag } from "../api/tagApi";
-import type { ProblemDetails } from "../api/apiFetch";
+## 概要
 
-export default function MyPage(): JSX.Element {
-  const [me, setMe] = useState<User | undefined>(undefined);
-  const [tagOptions, setTagOptions] = useState<Tag[]>([]);
+図書管理機能として、以下の2点を追加しました。
 
-  const [errorMessage, setErrorMessage] = useState("");
-  const [isEditing, setIsEditing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+- 図書の返却機能
+- 貸出時に、現在貸出可能な蔵書のみを表示する機能
 
-  const [department, setDepartment] = useState("");
-  const [bio, setBio] = useState("");
-  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
+## 変更内容
 
-  useEffect((): void => {
-    async function fetchData(): Promise<void> {
-      try {
-        const [fetchedMe, fetchedTags] = await Promise.all([
-          getMe(),
-          getTags(),
-        ]);
+### 返却機能
 
-        setMe(fetchedMe);
-        setTagOptions(fetchedTags);
+- 貸出中の蔵書に対して返却処理を行えるようにしました
+- 返却時に `returned_at` を更新することで、返却済みとして扱うようにしました
+- 返却済み、または存在しない貸出記録に対してはエラーを表示するようにしました
+- 返却完了後、一覽画面へ遷移し、完了メッセージを表示するようにしました
 
-        setDepartment(fetchedMe.department ?? "");
-        setBio(fetchedMe.bio ?? "");
-        setSelectedTagIds(fetchedMe.tags?.map((tag) => tag.id) ?? []);
-      } catch (error) {
-        const problem = error as ProblemDetails;
-        setErrorMessage(problem.detail ?? "データの取得に失敗しました。");
-      }
-    }
+### 貸出可能蔵書の表示
 
-    void fetchData();
-  }, []);
+- 貸出画面では、現在貸出中ではない蔵書のみを表示するようにしました
+- `circulation_record` に未返却の記録が存在する蔵書は、貸出対象から除外されます
+- これにより、すでに貸出中の蔵書を再度貸し出してしまうことを防止します
 
-  function startEdit(): void {
-    if (!me) return;
+## 確認内容
 
-    setDepartment(me.department ?? "");
-    setBio(me.bio ?? "");
-    setSelectedTagIds(me.tags?.map((tag) => tag.id) ?? []);
-    setErrorMessage("");
-    setIsEditing(true);
-  }
+- 貸出中の蔵書を返却できること
+- 返却後、該当蔵書が再び貸出可能になること
+- 貸出画面に、未返却の貸出記録がある蔵書が表示されないこと
+- 存在しない貸出記録、または返却済みの記録にアクセスした場合、エラーが表示されること
 
-  function cancelEdit(): void {
-    if (!me) return;
+## 補足
 
-    setDepartment(me.department ?? "");
-    setBio(me.bio ?? "");
-    setSelectedTagIds(me.tags?.map((tag) => tag.id) ?? []);
-    setErrorMessage("");
-    setIsEditing(false);
-  }
-
-  function toggleTag(tagId: number): void {
-    if (selectedTagIds.includes(tagId)) {
-      setSelectedTagIds(selectedTagIds.filter((id) => id !== tagId));
-    } else {
-      setSelectedTagIds([...selectedTagIds, tagId]);
-    }
-  }
-
-  async function saveProfile(): Promise<void> {
-    try {
-      setIsSaving(true);
-
-      const updatedMe = await updateMyProfile({
-        department,
-        bio,
-        tag: selectedTagIds,
-      });
-
-      setMe(updatedMe);
-      setDepartment(updatedMe.department ?? "");
-      setBio(updatedMe.bio ?? "");
-      setSelectedTagIds(updatedMe.tags?.map((tag) => tag.id) ?? []);
-
-      setIsEditing(false);
-      setErrorMessage("");
-    } catch (error) {
-      const problem = error as ProblemDetails;
-      setErrorMessage(problem.detail ?? "プロフィールの更新に失敗しました。");
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
-  if (!me) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  return (
-    <Box sx={{ p: 3 }}>
-      {errorMessage && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {errorMessage}
-        </Alert>
-      )}
-
-      <Paper
-        elevation={3}
-        sx={{
-          p: 4,
-          mb: 4,
-        }}
-      >
-        <Stack
-          direction="row"
-          spacing={5}
-          alignItems="center"
-        >
-          <Box>
-            <Avatar
-              src={me.profileIconUrl ?? undefined}
-              sx={{
-                width: 180,
-                height: 180,
-                fontSize: 48,
-                bgcolor: "primary.main",
-              }}
-            >
-              {me.name.charAt(0)}
-            </Avatar>
-
-            {!isEditing ? (
-              <Button
-                startIcon={<EditIcon />}
-                onClick={startEdit}
-                sx={{ mt: 3 }}
-              >
-                編集
-              </Button>
-            ) : (
-              <Stack direction="row" spacing={1} sx={{ mt: 3 }}>
-                <Button
-                  variant="contained"
-                  onClick={saveProfile}
-                  disabled={isSaving}
-                >
-                  保存
-                </Button>
-
-                <Button
-                  variant="outlined"
-                  onClick={cancelEdit}
-                  disabled={isSaving}
-                >
-                  キャンセル
-                </Button>
-              </Stack>
-            )}
-          </Box>
-
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="h4" sx={{ mb: 1 }}>
-              {me.name}
-            </Typography>
-
-            {isEditing ? (
-              <TextField
-                label="部署"
-                value={department}
-                onChange={(e) => setDepartment(e.target.value)}
-                size="small"
-                sx={{ mb: 2, width: 240 }}
-              />
-            ) : (
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                {me.department || "部署未設定"}
-              </Typography>
-            )}
-
-            <Typography sx={{ mb: 3 }}>
-              {me.email}
-            </Typography>
-
-            {isEditing ? (
-              <TextField
-                label="自己紹介"
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                multiline
-                minRows={3}
-                fullWidth
-                sx={{ mb: 3 }}
-              />
-            ) : (
-              <Typography sx={{ mb: 3 }}>
-                {me.bio || "自己紹介未設定"}
-              </Typography>
-            )}
-
-            {isEditing ? (
-              <Stack
-                direction="row"
-                spacing={1}
-                flexWrap="wrap"
-                useFlexGap
-              >
-                {tagOptions.map((tag) => (
-                  <Chip
-                    key={tag.id}
-                    label={tag.name}
-                    clickable
-                    color={
-                      selectedTagIds.includes(tag.id)
-                        ? "primary"
-                        : "default"
-                    }
-                    onClick={() => toggleTag(tag.id)}
-                  />
-                ))}
-              </Stack>
-            ) : (
-              <Stack
-                direction="row"
-                spacing={1}
-                flexWrap="wrap"
-                useFlexGap
-              >
-                {me.tags.length > 0 ? (
-                  me.tags.map((tag) => (
-                    <Chip key={tag.id} label={tag.name} />
-                  ))
-                ) : (
-                  <Typography color="text.secondary">
-                    タグ未設定
-                  </Typography>
-                )}
-              </Stack>
-            )}
-          </Box>
-        </Stack>
-      </Paper>
-
-      <Box>
-        <Typography variant="h6" sx={{ mb: 1 }}>
-          参加したイベント
-        </Typography>
-
-        {/* ここに参加イベント一覧を置く */}
-        <Typography color="text.secondary">
-          demo2 詳細
-        </Typography>
-      </Box>
-    </Box>
-  );
-}
+蔵書が貸出可能かどうかは、`circulation_record` に `returned_at IS NULL` の記録が存在するかどうかで判定しています。
